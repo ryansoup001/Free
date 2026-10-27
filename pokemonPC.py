@@ -266,7 +266,7 @@ combo2.pack(pady=50)
 button = tk.Button(page1,text = "createPlot", command=lambda: createPlot(df,combo1.get(),combo2.get(), page1, "Linear"))
 button.pack(pady=50)
 
-button2 = tk.Button(page1,text = "createList", command=lambda: createLine(df,combo1.get(), page1, ""))
+button2 = tk.Button(page1,text = "createList", command=lambda: createLine(df,combo1.get(), page1, "Linear"))
 button2.pack(pady=50)
 
 # print("Available columns:", df.columns.tolist()) 
@@ -289,7 +289,7 @@ combo4.pack(pady=50)
 button3 = tk.Button(page2,text = "createPlot", command=lambda: createPlot(df,combo3.get(),combo4.get(), page2, "KNN"))
 button3.pack(pady=50)
 
-button4 = tk.Button(page2,text = "createList", command=lambda: createLine(df,combo3.get(), page2, ""))
+button4 = tk.Button(page2,text = "createList", command=lambda: createLine(df,combo3.get(), page2, "KNN"))
 button4.pack(pady=50)
 #extra functions
 
