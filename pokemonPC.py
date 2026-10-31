@@ -157,8 +157,10 @@ def createPlot(df, var1, var2 , master, algo):
     y = df[var2]
 
     if algo == "Linear":
-          # model = lR(X,y,ax)
-          lR(X, y, ax)
+        # model = lR(X,y,ax)
+        lR(X, y, ax)
+        sc = ax.scatter(df[var1], df[var2])
+          
     elif algo == "KNN":
           X = df[[var1, var2]]
           sc = Knn(X,ax) 
@@ -181,6 +183,7 @@ def createPlot(df, var1, var2 , master, algo):
     # Label selected Pokémon
     # for name in ["Pikachu", "Mewtwo", "Snorlax", "Magikarp"]:
     #   labelObs(df, name, var1, var2, ax)
+
     if 'Name' in df.columns:
       @cursor.connect("add")
       def on_add(sel):
@@ -212,6 +215,7 @@ def createLine(df, var, master, algo):
   y = df[var]
   if (algo == "Linear"):
     lR(X,y,ax)
+    sc = ax.scatter(df["ID"], df[var])
   elif algo == "KNN":
     X = df[["ID",var]]
     sc = Knn(X,ax)
@@ -241,7 +245,38 @@ def createLine(df, var, master, algo):
 
     fig.tight_layout()
     drawCanvas(fig, master)
+def findMaxStat(df,statName):
+   return df.loc[df[statName].idxmax()]
+def createList(df,master,type,output):
+   #finding a pokemon with optimal speed, attack and special attack 
+   if type == "Sweep":
+    maxAtk = findMaxStat(df , "Attack")
+    maxSpeed = findMaxStat(df , "Speed")
+    spAtk = findMaxStat(df , "Special Attack")
+    candidate = [maxAtk,maxSpeed,spAtk]
+    cost = []
 
+    for i in candidate:
+       score = i["Attack"] * .25 + i["Special Attack"] * .25 + i["Speed"] * .50
+       cost.append(score)
+
+      
+    result = None
+    max_score = max(cost)
+    for i, score in enumerate(cost):
+        if score == max_score:
+            #print(candidate[i])
+            result = candidate[i]
+            break  # Stop loop once the maximum is found
+    # return result
+    for i in candidate:
+       label1["text"] = label1["text"] + candidate[i]
+    #label1["text"] = result
+   elif type == "Bulk":
+    maxDef = df.loc[df["Defense"].max()]
+
+
+   
 
 
 root.title("My First Window")  
@@ -276,7 +311,7 @@ button2.pack(pady=50)
 
 page2 = ttk.Frame(notebook)
 
-page2_options = ["HP","Attack","Special Attack", "Defense", "Special Defense", "Speed", "Active"]
+page2_options = ["HP","Attack","Special Attack", "Defense", "Special Defense", "Speed"]
 
 combo3 = ttk.Combobox(page2, values = page2_options, state = "read-only")
 combo3.set("Choose First Stat")
@@ -291,6 +326,17 @@ button3.pack(pady=50)
 
 button4 = tk.Button(page2,text = "createList", command=lambda: createLine(df,combo3.get(), page2, "KNN"))
 button4.pack(pady=50)
+
+
+page3 = ttk.Frame(notebook)
+
+label1 = tk.Label(page3,text = "")
+label1.pack(pady=50)
+
+button5 = tk.Button(page3, text = "Find PowerHouse", command=lambda: createList(df,page3,"Sweep",label1))
+button5.pack(pady=50)
+
+
 #extra functions
 
 # def predSpeed(df):
@@ -308,5 +354,5 @@ button4.pack(pady=50)
 
 notebook.add(page1, text="Linear Regression/Ratio")
 notebook.add(page2, text="Pokemon Similarity Calculator/KNN")
-
+notebook.add(page3, text="Pokemon Archetype Finder")
 root.mainloop()
