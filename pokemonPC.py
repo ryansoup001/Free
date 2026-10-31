@@ -19,11 +19,31 @@ REGION = "Kanto"
 REGION_RANGE = (0,0) 
 
 if (REGION == "Kanto"):
-  REGION_RANGE = (1,152)
+  REGION_RANGE = (0,151)
 elif (REGION == "Sinnoh"):
-  REGION_RANGE = (152,151)
+  REGION_RANGE = (151,251)
 elif (REGION == "Hoenn"):
-  REGION_RANGE = (1,151)
+  REGION_RANGE = (251,386)
+# def get_region(limit):
+#   url = f"https://pokeapi.co/api/v2/pokemon?limit={limit}"
+#   response = requests.get(url)
+
+#   if response.status_code == 200:
+#     data = response.json()
+    
+#     for p in data:
+#         pokemon = {
+#                           "Name": data["name"],
+#                           "ID": data["id"],
+#                           "Height": data["height"],
+#                           "Weight": data["weight"],
+#                           "Type": data["types"],
+#                           "Abilities": data["abilities"],
+#                           "Stats": data["stats"]
+                              
+#         }
+        
+#     return pokemon
 
 def get_pokemon(pokemon_ID):
   if (not pokemon_ID.isnumeric()):
@@ -73,7 +93,7 @@ def get_pokemon(pokemon_ID):
 pokemon_data = []
 for i in range(*REGION_RANGE):
   pokemon_data.append(get_pokemon(str(i)))
-
+# pokemon_data.append(get_region(REGION_RANGE[1]))
 df = pd.DataFrame(pokemon_data)
 
 # giving individual stats tables in DataFrame
@@ -245,20 +265,37 @@ def createLine(df, var, master, algo):
 
     fig.tight_layout()
     drawCanvas(fig, master)
-def findMaxStat(df,statName):
-   return df.loc[df[statName].idxmax()]
-def createList(df,master,type,output):
+def findMaxStat(df,statName , exclude):
+    excludeId = []
+    for i in exclude:
+      excludeId.append(i["ID"])
+      print(df[i["ID"]])
+      df = df.drop(index = i["ID"])
+      
+      print("Removed pokemon " + i["Name"]  + " at index " + str(i["ID"]))
+
+    result = df.loc[df[statName].idxmax()]
+    print("Searched and Found pokeomn " + result["Name"] )
+    for i in exclude:
+       df = pd.concat([df.iloc[:(i["ID"] - 1)], i, df.iloc[(i["ID"] - 1):]]
+).reset_index(drop=True)
+       print("Added index at " + str(i["ID"]))
+    return result
+   
+def createList(df,master,type):
    #finding a pokemon with optimal speed, attack and special attack 
+   label1["text"] = ""
+   exclusion = []
    if type == "Sweep":
-    maxAtk = findMaxStat(df , "Attack")
-    maxSpeed = findMaxStat(df , "Speed")
-    spAtk = findMaxStat(df , "Special Attack")
+    maxAtk = findMaxStat(df , "Attack" , exclude=exclusion)
+    maxSpeed = findMaxStat(df , "Speed" , exclude=exclusion)
+    spAtk = findMaxStat(df , "Special Attack" , exclude=exclusion)
     candidate = [maxAtk,maxSpeed,spAtk]
     cost = []
 
     for i in candidate:
-       score = i["Attack"] * .25 + i["Special Attack"] * .25 + i["Speed"] * .50
-       cost.append(score)
+      score = i["Attack"] * .25 + i["Special Attack"] * .25 + i["Speed"] * .50
+      cost.append(score)
 
       
     result = None
@@ -270,10 +307,34 @@ def createList(df,master,type,output):
             break  # Stop loop once the maximum is found
     # return result
     for i in candidate:
-       label1["text"] = label1["text"] + candidate[i]
+       label1["text"] = label1["text"] + "/n" +  str(i)
     #label1["text"] = result
    elif type == "Bulk":
-    maxDef = df.loc[df["Defense"].max()]
+    exclusion = []
+    maxDef1 = findMaxStat(df , "Defense" , exclude=exclusion )
+    exclusion.append(maxDef1)
+    maxDef2 = findMaxStat(df , "Special Defense" , exclude=exclusion )
+    exclusion.append(maxDef2)
+    maxDef3 = findMaxStat(df , "Defense" , exclude=exclusion )
+    candidate = [maxDef1,maxDef2,maxDef3]
+    cost = []
+    
+    for i in candidate:
+      score = i["Defense"] * .40 + i["Special Defense"] * .40 + i["Speed"] * .20
+      cost.append(score)
+
+    result = None
+    max_score = max(cost)
+
+    for i, score in enumerate(cost):
+      if score == max_score:
+        #print(candidate[i])
+        result = candidate[i]
+        break  # Stop loop once the maximum is found
+    
+    # return result
+    for i in candidate:
+      label1["text"] = label1["text"] + "/n" +  str(i)
 
 
    
@@ -333,9 +394,11 @@ page3 = ttk.Frame(notebook)
 label1 = tk.Label(page3,text = "")
 label1.pack(pady=50)
 
-button5 = tk.Button(page3, text = "Find PowerHouse", command=lambda: createList(df,page3,"Sweep",label1))
+button5 = tk.Button(page3, text = "Find PowerHouse Pokemon", command=lambda: createList(df,page3,"Sweep"))
 button5.pack(pady=50)
 
+button6 = tk.Button(page3, text = "Find Bulk/Stall Pokemon", command=lambda: createList(df,page3,"Bulk"))
+button6.pack(pady=50)
 
 #extra functions
 
